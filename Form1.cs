@@ -1,4 +1,5 @@
-﻿using System;
+﻿using myLibrary;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -9,82 +10,111 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace WinFormsApp1
+namespace WindowsFormsEdit
 {
     public partial class Form1 : Form
     {
-        bool status = false;
-        //bool변수에는 1,0이 아닌  true, false를 넣어야 함
         public Form1()
         {
             InitializeComponent();
         }
+        
+ //       int Count(char deli, string str)    // str 문자열의 deli 구분자의 개수 + 1
+ //       {
+ //           string[] Strs = str.Split(deli);
+ //           int n = Strs.Length;
+ //           return n - 1;
+ //       }
+ //       string GetToKen(int index, char deli, string str)
+ //       {
+ //           string[] Strs = str.Split(deli);
+ ////           int n = Strs.Length;
+ //           string ret = Strs[index];
+ //           return ret;
+ //       }
 
-        private void btnTest_Click(object sender, EventArgs e)
+        private void mnuFileOpen_Click(object sender, EventArgs e)
         {
-            if (status)
+            DialogResult ret = openFileDialog1.ShowDialog();   // C++  DoModal
+            if (ret == DialogResult.OK)
             {
-                btnTest.Text = "버튼테스트 1";
+                string fName = openFileDialog1.FileName;        // full path
+                string fName1 = openFileDialog1.SafeFileName;   // file name only
+                StreamReader sr = new StreamReader(fName);      // class 를 선언할때는 new keyword를 이용해서 생상자를 표시해주어야 한다
+                                                                // 즉 c:FILE*    c++:CFile에 대응되는 C#에서 read를 위한 file open class이다.
+                string buf = sr.ReadToEnd();
+                tbMemo.Text = buf;
+                sr.Close();
+                int n = myLib.Count('\\', fName);       // fName에서의 '\\' 갯수
+                string fName2 = myLib.GetToKen(n, '\\', fName);   // fName에서 마지막 문자열
+                this.Text += $"     [{fName2}]";  // == 파일명
             }
-            else
-            {
-                btnTest.Text = "버튼테스트 2";
-            }
-            status = !status;
         }
 
-        private void btnFileOpen_Click(object sender, EventArgs e)
-        {
-            DialogResult ret = openFileDialog1.ShowDialog();
-            if (ret == DialogResult.Cancel) return;     // 파일이 선택되지 않으면 리턴
-
-            string fName = openFileDialog1.FileName;    // File full path
-            StreamReader sr = new StreamReader(fName);
-            string buf = sr.ReadToEnd();
-            sr.Close();
-            tbMemo.Text = buf;
-            
-            //sr.Read();
-        }
-
-        private void btnFileSave_Click(object sender, EventArgs e)
+        // Save As...
+        private void mnuFileSave_Click(object sender, EventArgs e)
         {
             DialogResult ret = saveFileDialog1.ShowDialog();
-            if (ret == DialogResult.Cancel) return;     // 파일이 선택되지 않으면 리턴
+            if (ret == DialogResult.Cancel) return;
 
-            string fName = saveFileDialog1.FileName;    // File full path
-            StreamWriter sw = new StreamWriter(fName);  // save 이므로 Write
-                                                        // StreamWriter sw = new StreamWriter(saveFileDialog1.FileName);
-            string buf = tbMemo.Text;                   // 굳이 필요 없는 단계임
-            sw.Write(buf);                              // 한줄로 sw.Write(tbMemo.text); 로 쓸 수 있음
-            sw.Close();                                 // 닫기 필수
+            string fName = saveFileDialog1.FileName;
+            StreamWriter sw = new StreamWriter(fName);
+
+            string buf = tbMemo.Text;
+            sw.Write(buf);
+            sw.Close();
         }
 
-        private void btnConvert_Click(object sender, EventArgs e)
+        //  1. file open 후 Memo 창에 표시한 경우 - 확인(o) 수정(x)
+        //  2. New 메뉴 선택 후 문서 편집         - file명 없음
+        //  3. 기존 문서 중 일부 수정             - open file명 있음
+
+        int txtChanged = 0;
+        private void tbMemo_TextChanged(object sender, EventArgs e)
         {
-            string src = tb1.Text;		// c++ CString
-            string dst = src.ToUpper();	// CString str; 
-            tb2.Text = dst;				// str.Format("%d", n);
-            int n = src.Length;			// SetWindowTest(str);
-            //string etc = "문자열의 길이는 " + n + "입니다";
-            string etc = $"변환된 문자열은 \"{dst}\"이고 문자열의 길이는 {n,5:c} 입니다";    // 5는 자릿수 x->16진수로 찍어라
-            tb3.Text = etc;
+            
+            if (true) txtChanged = 1;
         }
 
-        private void btnCall_Click(object sender, EventArgs e)
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Form2 frm2 = new Form2();   // 처음에 생성자를 호출해야함
-            if (frm2.ShowDialog() == DialogResult.OK)
+            if (txtChanged == 1) 
             {
-                tb4.Text = frm2.cb1.Text + "\r\n" +
-                           frm2.cb2.Text + "\r\n" +
-                           frm2.cb3.Text;
-            }            
+
+            }
         }
 
-        private void tb4_TextChanged(object sender, EventArgs e)
+        private void mnuViewFont_Click(object sender, EventArgs e)
         {
+            DialogResult ret = fontDialog1.ShowDialog();
+            if (ret == DialogResult.Cancel) return;
 
+            Font fnt = fontDialog1.Font;
+            tbMemo.Font = fnt;
+
+            //sbLabel1.Text = fnt.Name;
+            //sbLabel2.Text = fnt.Size;
+            SetFontInfo();
+
+        }
+        private void SetFontInfo()
+        {
+            sbLabel1.Text = tbMemo.Font.Name + $",  {tbMemo.Font.Height}";
+        }
+
+        private void mnuFileNew_Click(object sender, EventArgs e)
+        {
+            tbMemo.Text = null;
+        }
+
+        private void mnuLinechange_Click(object sender, EventArgs e)
+        {
+            tbMemo.WordWrap = false;
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            SetFontInfo();
         }
     }
 }
